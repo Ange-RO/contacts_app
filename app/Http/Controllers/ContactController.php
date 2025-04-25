@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ContactAddedEvent;
+use App\Events\ContactUpdatedEvent;
+use App\Events\ContactDeletedEvent;
+
 use App\Http\Requests\AddContactRequest;
 use App\Http\Requests\UpdateContactRequest;
 use App\Models\Contact;
@@ -25,7 +29,7 @@ class ContactController extends Controller
     {
         if($request->validated()) {
             //save the contact
-            Contact::create([
+            $contact = Contact::create([
                 'name' =>$request->name,
                 'email' =>$request->email,
                 'phone' =>$request->phone,
@@ -37,6 +41,8 @@ class ContactController extends Controller
                 'user_id' => auth()->user()->id
             ]);
 
+            
+            event(new ContactAddedEvent($contact));
             //show the success message
             return redirect()->route('home')->with([
                 'message' => 'Contact added successfully',
@@ -73,7 +79,7 @@ class ContactController extends Controller
                 'country_fly' => $request->country_fly,
                 'user_id' => auth()->user()->id
             ]);
-
+            event(new ContactUpdatedEvent($contact));
             //show the success message
             return redirect()->route('home')->with([
                 'message' => 'Contact updated successfully',
@@ -90,6 +96,8 @@ class ContactController extends Controller
         if(auth()->user()->contacts->contains($contact)) {
             //delete the contact
             $contact->delete();
+            event(new ContactDeletedEvent($contact));
+
             //show the success message
             return redirect()->route('home')->with([
                 'message' => 'Contact deleted successfully',
